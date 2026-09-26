@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Ultimate Presenter Relay</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 50%, #f3e8ff 100%);
+            min-height: 100vh;
+        }
+
+        .font-heading {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* Perspective and card flip styles */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        .card-flip {
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Pulsing & glow effects for classroom projector */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.8); }
+        }
+
+        .active-team-card {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes timer-danger {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        .timer-warning {
+            animation: timer-danger 0.5s infinite;
+            color: #ef4444 !important;
+        }
+
+        /* Glassmorphism utility */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.6);
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="glass-panel sticky top-0 z-30 px-4 py-3 shadow-sm border-b border-indigo-100">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <!-- App Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md text-xl">
+                    <i class="fa-solid fa-microphone-lines"></i>
+                </div>
+                <div>
+                    <h1 class="font-heading text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-700 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        The Ultimate Presenter Relay
+                    </h1>
+                    <p class="text-xs font-semibold text-slate-500 hidden sm:block">Master Public Speaking Transitions</p>
+                </div>
+            </div>
+
+            <!-- Action Controls & Sound Toggles -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Leaderboard Trigger -->
+                <button onclick="openLeaderboardModal()" class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs sm:text-sm shadow-md transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-trophy"></i> <span>Leaderboard</span>
+                </button>
+
+                <!-- Sound FX Toggle -->
+                <button id="soundToggleBtn" onclick="toggleSound()" class="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 flex items-center justify-center shadow-sm transition" title="Toggle Sound FX">
+                    <i id="soundIcon" class="fa-solid fa-volume-high text-indigo-600"></i>
+                </button>
+
+                <!-- Deck Customizer Trigger -->
+                <button onclick="openDeckModal()" class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center shadow-sm transition" title="Manage Topic Cards">
+                    <i class="fa-solid fa-layer-group"></i>
+                </button>
+
+                <!-- Instructions Trigger -->
+                <button onclick="openHelpModal()" class="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 flex items-center justify-center shadow-sm transition" title="How to Play">
+                    <i class="fa-solid fa-circle-question"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6">
+
+        <!-- TEAM SCOREBOARD SECTION -->
+        <section id="scoreboardSection" class="w-full">
+            <div class="flex items-center justify-between mb-2 px-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-indigo-900/60 flex items-center gap-2">
+                    <i class="fa-solid fa-people-group text-indigo-600"></i> Active Teams & Scoreboard
+                </span>
+                <span id="roundCounter" class="text-xs font-bold text-slate-600 bg-white px-2.5 py-1 rounded-full border border-slate-200">
+                    Round 1
+                </span>
+            </div>
+            
+            <div id="teamsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                <!-- Dynamic Teams injected here -->
+            </div>
+        </section>
+
+        <!-- PRESENTATION STAGE / MAIN GAME AREA -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-start">
+
+            <!-- LEFT/CENTER: Interactive Cards Display (8 Cols) -->
+            <div class="lg:col-span-8 flex flex-col gap-6">
+                
+                <!-- Topic Cards Container -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 perspective-1000">
+
+                    <!-- CARD 1: THE PAST / STATEMENT -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center justify-between px-1">
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 bg-blue-100 px-2.5 py-0.5 rounded-full">
+                                <i class="fa-solid fa-backward-step mr-1"></i> Topic 1: The Past / Statement
+                            </span>
+                        </div>
+                        <div id="card1" class="card-flip transform-style-3d relative w-full h-56 sm:h-64 rounded-3xl cursor-pointer shadow-lg hover:shadow-xl transition-shadow" onclick="flipCard(1)">
+                            <!-- Front Side -->
+                            <div class="absolute inset-0 backface-hidden rounded-3xl bg-white border-2 border-blue-200 p-6 flex flex-col justify-between items-center text-center overflow-hidden">
+                                <div class="w-full flex justify-end">
+                                    <span class="text-xs font-semibold text-slate-400"><i class="fa-solid fa-rotate"></i> Tap to flip</span>
+                                </div>
+                                <div class="my-auto flex flex-col items-center gap-3">
+                                    <div id="topic1Icon" class="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-3xl shadow-inner border border-blue-100">
+                                        <i class="fa-solid fa-pizza-slice"></i>
+                                    </div>
+                                    <h3 id="topic1Title" class="font-heading text-2xl md:text-3xl font-bold text-slate-800">
+                                        Pizza
+                                    </h3>
+                                    <p id="topic1Desc" class="text-xs text-slate-500 max-w-[200px]">Delicious cheesy fast food staple</p>
+                                </div>
+                                <div class="w-full bg-blue-50/80 py-1.5 rounded-xl text-xs font-semibold text-blue-700">
+                                    "I've talked about..."
+                                </div>
+                            </div>
+                            <!-- Back Side -->
+                            <div class="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-white flex flex-col justify-center items-center text-center">
+                                <i class="fa-solid fa-comments text-4xl opacity-80 mb-2"></i>
+                                <p class="text-sm font-medium">State 1 detail about this topic to summarize your first point!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: THE FUTURE / RHETORICAL QUESTION -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center justify-between px-1">
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-purple-600 bg-purple-100 px-2.5 py-0.5 rounded-full">
+                                <i class="fa-solid fa-forward-step mr-1"></i> Topic 2: Future / Question
+                            </span>
+                        </div>
+                        <div id="card2" class="card-flip transform-style-3d relative w-full h-56 sm:h-64 rounded-3xl cursor-pointer shadow-lg hover:shadow-xl transition-shadow" onclick="flipCard(2)">
+                            <!-- Front Side -->
+                            <div class="absolute inset-0 backface-hidden rounded-3xl bg-white border-2 border-purple-200 p-6 flex flex-col justify-between items-center text-center overflow-hidden">
+                                <div class="w-full flex justify-end">
+                                    <span class="text-xs font-semibold text-slate-400"><i class="fa-solid fa-rotate"></i> Tap to flip</span>
+                                </div>
+                                <div class="my-auto flex flex-col items-center gap-3">
+                                    <div id="topic2Icon" class="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-3xl shadow-inner border border-purple-100">
+                                        <i class="fa-solid fa-rocket"></i>
+                                    </div>
+                                    <h3 id="topic2Title" class="font-heading text-2xl md:text-3xl font-bold text-slate-800">
+                                        Mars Exploration
+                                    </h3>
+                                    <p id="topic2Desc" class="text-xs text-slate-500 max-w-[200px]">Space missions & human settlement</p>
+                                </div>
+                                <div class="w-full bg-purple-50/80 py-1.5 rounded-xl text-xs font-semibold text-purple-700">
+                                    "Next, I'll talk about..."
+                                </div>
+                            </div>
+                            <!-- Back Side -->
+                            <div class="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl bg-gradient-to-br from-purple-600 to-pink-600 p-6 text-white flex flex-col justify-center items-center text-center">
+                                <i class="fa-solid fa-lightbulb text-4xl opacity-80 mb-2"></i>
+                                <p class="text-sm font-medium">Bridge smoothly into this topic using your chosen transition pattern!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ACTION BUTTONS BAR -->
+                <div class="glass-panel p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 border border-indigo-100 shadow-sm">
+                    <!-- Draw New Pair Button -->
+                    <button onclick="drawNewPair()" class="flex-1 sm:flex-none px-6 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-base shadow-md hover:shadow-indigo-200 active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-shuffle"></i> Draw New Topics
+                    </button>
+
+                    <!-- Score Award Buttons -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <button onclick="awardPoints(1)" class="flex-1 sm:flex-none px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-circle-check"></i> +1 Point
+                        </button>
+                        <button onclick="awardPoints(2)" class="flex-1 sm:flex-none px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-star"></i> +2 Bonus
+                        </button>
+                    </div>
+                </div>
+
+                <!-- DYNAMIC TRANSITION CHEAT SHEET -->
+                <div class="glass-panel p-5 rounded-3xl border border-indigo-100 shadow-sm flex flex-col gap-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-bold">
+                                <i class="fa-solid fa-book-open"></i>
+                            </div>
+                            <h4 class="font-heading font-bold text-slate-800 text-base">Transition Formula Cheat Sheet</h4>
+                        </div>
+                        <button onclick="toggleCheatSheet()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                            <span id="cheatToggleText">Hide</span> <i id="cheatToggleIcon" class="fa-solid fa-chevron-up"></i>
+                        </button>
+                    </div>
+
+                    <div id="cheatSheetContent" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Pattern A -->
+                        <div class="p-4 rounded-2xl bg-blue-50/70 border border-blue-100 flex flex-col gap-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-blue-700 uppercase tracking-wide">Pattern 1: Past / Future</span>
+                                <span class="text-[10px] font-bold bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full">Standard</span>
+                            </div>
+                            <p class="text-sm text-slate-700 font-medium leading-relaxed">
+                                "I have talked about <span class="dynamic-topic1 font-bold text-blue-600 underline underline-offset-2">Pizza</span>. Next, I'm going to tell you about <span class="dynamic-topic2 font-bold text-purple-600 underline underline-offset-2">Mars Exploration</span>."
+                            </p>
+                            <p class="text-xs text-slate-500 italic mt-1">
+                                Variation: "We have seen... Now, let's look at..."
+                            </p>
+                        </div>
+
+                        <!-- Pattern B -->
+                        <div class="p-4 rounded-2xl bg-purple-50/70 border border-purple-100 flex flex-col gap-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-purple-700 uppercase tracking-wide">Pattern 2: Statement / Question</span>
+                                <span class="text-[10px] font-bold bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full">Engaging</span>
+                            </div>
+                            <p class="text-sm text-slate-700 font-medium leading-relaxed">
+                                "We have looked at <span class="dynamic-topic1 font-bold text-blue-600 underline underline-offset-2">Pizza</span>. But how can we <span class="dynamic-topic2 font-bold text-purple-600 underline underline-offset-2">Mars Exploration</span>?"
+                            </p>
+                            <p class="text-xs text-slate-500 italic mt-1">
+                                Variation: "...But what about <span class="dynamic-topic2 font-bold text-purple-600">Mars Exploration</span>?"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT SIDE: Speaking Countdown Timer & Controls (4 Cols) -->
+            <div class="lg:col-span-4 flex flex-col gap-6">
+
+                <!-- 30-Second Countdown Timer Card -->
+                <div class="glass-panel p-6 rounded-3xl border border-indigo-100 shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-stopwatch text-indigo-500"></i> Speaking Timer
+                    </span>
+
+                    <!-- Giant Circular Dial / Timer Display -->
+                    <div class="relative w-44 h-44 my-2 flex items-center justify-center">
+                        <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                            <!-- Background Circle -->
+                            <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="text-slate-100" fill="transparent" />
+                            <!-- Progress Ring -->
+                            <circle id="timerProgressRing" cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="text-indigo-600 transition-all duration-1000 ease-linear" fill="transparent" stroke-dasharray="263.89" stroke-dashoffset="0" stroke-linecap="round" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span id="timerText" class="font-heading text-5xl font-bold text-slate-800 tracking-tight">30</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Seconds</span>
+                        </div>
+                    </div>
+
+                    <!-- Timer Controls -->
+                    <div class="flex items-center gap-2 mt-2 w-full">
+                        <button id="startTimerBtn" onclick="toggleTimer()" class="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-sm transition flex items-center justify-center gap-2">
+                            <i id="timerStartIcon" class="fa-solid fa-play"></i> <span id="timerStartText">Start Timer</span>
+                        </button>
+                        <button onclick="resetTimer()" class="px-3.5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition" title="Reset Timer">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                    </div>
+
+                    <!-- Quick Time Preset Selectors -->
+                    <div class="flex items-center justify-center gap-2 mt-4 text-xs font-semibold text-slate-500">
+                        <span>Presets:</span>
+                        <button onclick="setTimerDuration(15)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 transition">15s</button>
+                        <button onclick="setTimerDuration(30)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 transition">30s</button>
+                        <button onclick="setTimerDuration(45)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 transition">45s</button>
+                    </div>
+                </div>
+
+                <!-- Teacher Quick Rules Guide -->
+                <div class="glass-panel p-5 rounded-3xl border border-indigo-100 shadow-sm flex flex-col gap-3">
+                    <h4 class="font-heading font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-indigo-500"></i> Quick Step Guide
+                    </h4>
+                    <ol class="text-xs text-slate-600 space-y-2 list-decimal list-inside leading-relaxed">
+                        <li><strong>Draw Topics:</strong> Tap "Draw New Topics" for Topic 1 & 2.</li>
+                        <li><strong>Sentence 1:</strong> Speaker says 1 sentence summarizing Topic 1.</li>
+                        <li><strong>Transition:</strong> Speaker uses Pattern 1 or 2 to bridge.</li>
+                        <li><strong>Sentence 2:</strong> Speaker says 1 sentence introducing Topic 2.</li>
+                    </ol>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- MODAL: LEADERBOARD & FINAL STANDINGS -->
+    <div id="leaderboardModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-panel bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl flex flex-col max-h-[85vh] border border-white">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-amber-500 text-xl"></i>
+                    <h3 class="font-heading text-xl font-bold text-slate-800">Team Leaderboard</h3>
+                </div>
+                <button onclick="closeLeaderboardModal()" class="text-slate-400 hover:text-slate-600 text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Leaderboard Rankings List -->
+            <div id="leaderboardList" class="my-4 flex flex-col gap-2.5 overflow-y-auto max-h-[50vh]">
+                <!-- Injected dynamically via JS -->
+            </div>
+
+            <!-- Footer Action Buttons -->
+            <div class="pt-4 border-t border-slate-100 flex flex-col gap-2">
+                <button onclick="finishGameAndAnnounceWinner()" class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-crown"></i> Finish Game & Final Standings
+                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="resetGameScores()" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+                        Reset Scores
+                    </button>
+                    <button onclick="closeLeaderboardModal()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition">
+                        Back to Game
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DECK CUSTOMIZER -->
+    <div id="deckModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-panel bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl flex flex-col max-h-[85vh] border border-white">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-indigo-600 text-xl"></i>
+                    <h3 class="font-heading text-xl font-bold text-slate-800">Manage Topic Deck</h3>
+                </div>
+                <button onclick="closeDeckModal()" class="text-slate-400 hover:text-slate-600 text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Add New Card Form -->
+            <form onsubmit="addCustomTopic(event)" class="my-4 flex flex-col gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Add Custom Topic</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input type="text" id="newTopicTitle" placeholder="Topic Name (e.g. Video Games)" required class="px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="newTopicDesc" placeholder="Short description (optional)" class="px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <select id="newTopicIcon" class="px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="fa-gamepad">🎮 Gamepad</option>
+                        <option value="fa-cat">🐱 Cat / Pet</option>
+                        <option value="fa-dog">🐶 Dog</option>
+                        <option value="fa-graduation-cap">🎓 School</option>
+                        <option value="fa-music">🎵 Music</option>
+                        <option value="fa-utensils">🍕 Food</option>
+                        <option value="fa-futbol">⚽ Sports</option>
+                        <option value="fa-earth-americas">🌍 Environment</option>
+                        <option value="fa-robot">🤖 Technology</option>
+                        <option value="fa-film">🎬 Movies</option>
+                    </select>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
+                        <i class="fa-solid fa-plus mr-1"></i> Add Card
+                    </button>
+                </div>
+            </form>
+
+            <!-- Cards List -->
+            <div class="flex-1 overflow-y-auto pr-1 flex flex-col gap-2">
+                <div class="flex items-center justify-between text-xs font-bold text-slate-500 mb-1">
+                    <span>Current Topics (<span id="totalCardCount">0</span>)</span>
+                    <button onclick="resetDefaultDeck()" class="text-indigo-600 hover:underline">Reset Defaults</button>
+                </div>
+                <div id="deckCardsList" class="flex flex-col gap-2">
+                    <!-- Cards list populated via JS -->
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex justify-end">
+                <button onclick="closeDeckModal()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: HELP & GAME RULES -->
+    <div id="helpModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-panel bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl flex flex-col max-h-[85vh] border border-white">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-circle-question text-amber-500 text-xl"></i>
+                    <h3 class="font-heading text-xl font-bold text-slate-800">How to Play</h3>
+                </div>
+                <button onclick="closeHelpModal()" class="text-slate-400 hover:text-slate-600 text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto py-4 flex flex-col gap-4 text-sm text-slate-600">
+                <div>
+                    <h4 class="font-bold text-slate-800 text-base mb-1">🎯 Objective</h4>
+                    <p>Practice public speaking transitions by smoothly bridging two unrelated topics using textbook patterns!</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-800 text-base mb-1">🗣️ The 3-Step Presentation</h4>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li><strong>Step 1:</strong> Say one summary sentence about Topic 1.</li>
+                        <li><strong>Step 2:</strong> Deliver a transition phrase from the cheat sheet.</li>
+                        <li><strong>Step 3:</strong> Conclude with one sentence about Topic 2.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-800 text-base mb-1">⭐ Scoring Points</h4>
+                    <p>Award <strong>+1 Point</strong> for a clear transition, or <strong>+2 Bonus Points</strong> for exceptional creativity or humor!</p>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex justify-end">
+                <button onclick="closeHelpModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition">
+                    Got It!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // --- ZERO-DEPENDENCY NATIVE WEB AUDIO SYNTHESIZER ---
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    function playSFX(type) {
+        if (!soundEnabled) return;
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'cardFlip') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'score' || type === 'bell') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'tick') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, now);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.03);
+                osc.start(now);
+                osc.stop(now + 0.03);
+            } else if (type === 'alarm') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(880, now + 0.1);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'fanfare') {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const subOsc = audioCtx.createOscillator();
+                    const subGain = audioCtx.createGain();
+                    subOsc.connect(subGain);
+                    subGain.connect(audioCtx.destination);
+                    subOsc.type = 'triangle';
+                    subOsc.frequency.value = freq;
+                    subGain.gain.setValueAtTime(0.2, now + idx * 0.1);
+                    subGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.3);
+                    subOsc.start(now + idx * 0.1);
+                    subOsc.stop(now + idx * 0.1 + 0.3);
+                });
+            }
+        } catch (e) {
+            console.warn('Audio playback error:', e);
+        }
+    }
+
+    function playSound(type) {
+        playSFX(type);
+    }
+
+    function toggleSound() {
+        soundEnabled = !soundEnabled;
+        const icon = document.getElementById('soundIcon');
+        const btn = document.getElementById('soundToggleBtn');
+        if (soundEnabled) {
+            icon.className = 'fa-solid fa-volume-high text-indigo-600';
+            btn.classList.remove('opacity-50');
+            playSound('click');
+        } else {
+            icon.className = 'fa-solid fa-volume-xmark text-slate-400';
+            btn.classList.add('opacity-50');
+        }
+    }
+
+    // --- TOPIC CARDS DATASET ---
+    const DEFAULT_TOPICS = [
+        { id: 1, title: 'Pizza', desc: 'Delicious cheesy fast food staple', icon: 'fa-pizza-slice' },
+        { id: 2, title: 'Mars Exploration', desc: 'Space missions & human settlement', icon: 'fa-rocket' },
+        { id: 3, title: 'Video Games', desc: 'Interactive digital entertainment', icon: 'fa-gamepad' },
+        { id: 4, title: 'Pet Dogs', desc: 'Man\'s best friend & companionship', icon: 'fa-dog' },
+        { id: 5, title: 'Artificial Intelligence', desc: 'Smart machines & futuristic tech', icon: 'fa-robot' },
+        { id: 6, title: 'Climate Change', desc: 'Global warming & environmental care', icon: 'fa-earth-americas' },
+        { id: 7, title: 'Music & Concerts', desc: 'Rhythm, melodies & live shows', icon: 'fa-music' },
+        { id: 8, title: 'School Uniforms', desc: 'Student dress codes & debate', icon: 'fa-graduation-cap' },
+        { id: 9, title: 'Social Media', desc: 'Connecting people or distraction?', icon: 'fa-hashtag' },
+        { id: 10, title: 'World Travel', desc: 'Exploring foreign cultures & places', icon: 'fa-plane' },
+        { id: 11, title: 'Public Speaking', desc: 'Overcoming stage fright & confidence', icon: 'fa-bullhorn' },
+        { id: 12, title: 'Bicycle Transportation', desc: 'Eco-friendly urban commuting', icon: 'fa-bicycle' },
+        { id: 13, title: 'Healthy Eating', desc: 'Balanced nutrition & fresh fruit', icon: 'fa-apple-whole' },
+        { id: 14, title: 'Cinema & Movies', desc: 'Storytelling on the big screen', icon: 'fa-film' }
+    ];
+
+    let topicsDeck = [...DEFAULT_TOPICS];
+    let currentTopic1 = topicsDeck[0];
+    let currentTopic2 = topicsDeck[1];
+
+    // --- GAME STATE ---
+    let teams = [
+        { id: 1, name: 'Team A', score: 0 },
+        { id: 2, name: 'Team B', score: 0 },
+        { id: 3, name: 'Team C', score: 0 }
+    ];
+    let activeTeamIndex = 0;
+    let currentRound = 1;
+
+    // --- TIMER STATE ---
+    let timerInitial = 30;
+    let timerRemaining = 30;
+    let timerInterval = null;
+    let isTimerRunning = false;
+
+    function renderTeams() {
+        const grid = document.getElementById('teamsGrid');
+        grid.innerHTML = '';
+
+        teams.forEach((team, index) => {
+            const isActive = index === activeTeamIndex;
+            const teamEl = document.createElement('div');
+            teamEl.className = `glass-panel p-3.5 rounded-2xl border transition-all duration-300 flex flex-col justify-between relative overflow-hidden ${
+                isActive 
+                ? 'border-indigo-500 bg-white ring-2 ring-indigo-500/30 active-team-card' 
+                : 'border-slate-200 hover:border-slate-300'
+            }`;
+
+            teamEl.innerHTML = `
+                <div class="flex items-center justify-between gap-1 mb-2">
+                    <input type="text" value="${team.name}" onchange="updateTeamName(${index}, this.value)" 
+                        class="font-heading font-bold text-sm bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none rounded px-1 w-full text-slate-800">
+                    ${isActive ? '<span class="text-[10px] font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0"><i class="fa-solid fa-microphone text-[8px]"></i> Turn</span>' : ''}
+                </div>
+                <div class="flex items-baseline justify-between mt-1">
+                    <span class="text-xs text-slate-400 font-semibold">Score</span>
+                    <span class="font-heading text-2xl font-bold text-indigo-600">${team.score}</span>
+                </div>
+            `;
+            grid.appendChild(teamEl);
+        });
+
+        // Add team button if under 4 teams
+        if (teams.length < 4) {
+            const addBtn = document.createElement('button');
+            addBtn.onclick = addTeam;
+            addBtn.className = 'border-2 border-dashed border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 rounded-2xl p-3 flex flex-col items-center justify-center text-slate-400 hover:text-indigo-600 transition gap-1 min-h-[90px]';
+            addBtn.innerHTML = `
+                <i class="fa-solid fa-plus text-base"></i>
+                <span class="text-xs font-bold">Add Team</span>
+            `;
+            grid.appendChild(addBtn);
+        }
+    }
+
+    function addTeam() {
+        if (teams.length >= 4) return;
+        const newId = teams.length + 1;
+        teams.push({ id: newId, name: `Team ${String.fromCharCode(64 + newId)}`, score: 0 });
+        playSound('click');
+        renderTeams();
+    }
+
+    function updateTeamName(index, name) {
+        teams[index].name = name.trim() || `Team ${index + 1}`;
+    }
+
+    // --- CARD DRAWING & FLIP LOGIC ---
+    function drawNewPair() {
+        playSound('cardFlip');
+        resetTimer();
+
+        if (topicsDeck.length < 2) {
+            alert('Please add more cards to the deck in settings!');
+            return;
+        }
+
+        let idx1 = Math.floor(Math.random() * topicsDeck.length);
+        let idx2 = Math.floor(Math.random() * topicsDeck.length);
+        while (idx2 === idx1) {
+            idx2 = Math.floor(Math.random() * topicsDeck.length);
+        }
+
+        currentTopic1 = topicsDeck[idx1];
+        currentTopic2 = topicsDeck[idx2];
+
+        // Trigger card animation reset
+        const card1 = document.getElementById('card1');
+        const card2 = document.getElementById('card2');
+        card1.classList.remove('rotate-y-180');
+        card2.classList.remove('rotate-y-180');
+
+        // Apply card values
+        document.getElementById('topic1Title').innerText = currentTopic1.title;
+        document.getElementById('topic1Desc').innerText = currentTopic1.desc;
+        document.getElementById('topic1Icon').innerHTML = `<i class="fa-solid ${currentTopic1.icon}"></i>`;
+
+        document.getElementById('topic2Title').innerText = currentTopic2.title;
+        document.getElementById('topic2Desc').innerText = currentTopic2.desc;
+        document.getElementById('topic2Icon').innerHTML = `<i class="fa-solid ${currentTopic2.icon}"></i>`;
+
+        // Update Dynamic Cheat Sheet
+        const t1Elements = document.querySelectorAll('.dynamic-topic1');
+        const t2Elements = document.querySelectorAll('.dynamic-topic2');
+        t1Elements.forEach(el => el.innerText = currentTopic1.title);
+        t2Elements.forEach(el => el.innerText = currentTopic2.title);
+    }
+
+    function flipCard(cardNum) {
+        playSound('cardFlip');
+        const card = document.getElementById(`card${cardNum}`);
+        card.classList.toggle('rotate-y-180');
+    }
+
+    function awardPoints(pts) {
+        playSound('score');
+
+        // Launch victory confetti
+        confetti({
+            particleCount: pts === 2 ? 80 : 40,
+            spread: 60,
+            origin: { y: 0.7 }
+        });
+
+        teams[activeTeamIndex].score += pts;
+        
+        // Advance Turn
+        activeTeamIndex = (activeTeamIndex + 1) % teams.length;
+        if (activeTeamIndex === 0) {
+            currentRound++;
+            document.getElementById('roundCounter').innerText = `Round ${currentRound}`;
+        }
+
+        renderTeams();
+        drawNewPair();
+    }
+
+    // --- SPEAKING TIMER LOGIC ---
+    function setTimerDuration(seconds) {
+        playSound('click');
+        timerInitial = seconds;
+        resetTimer();
+    }
+
+    function toggleTimer() {
+        if (isTimerRunning) {
+            pauseTimer();
+        } else {
+            startTimer();
+        }
+    }
+
+    function startTimer() {
+        if (isTimerRunning) return;
+        playSound('click');
+        isTimerRunning = true;
+        document.getElementById('timerStartIcon').className = 'fa-solid fa-pause';
+        document.getElementById('timerStartText').innerText = 'Pause';
+
+        timerInterval = setInterval(() => {
+            timerRemaining--;
+            updateTimerUI();
+
+            if (timerRemaining <= 5 && timerRemaining > 0) {
+                playSound('tick');
+            }
+
+            if (timerRemaining <= 0) {
+                pauseTimer();
+                playSound('alarm');
+                document.getElementById('timerText').classList.add('timer-warning');
+            }
+        }, 1000);
+    }
+
+    function pauseTimer() {
+        isTimerRunning = false;
+        clearInterval(timerInterval);
+        document.getElementById('timerStartIcon').className = 'fa-solid fa-play';
+        document.getElementById('timerStartText').innerText = 'Start Timer';
+    }
+
+    function resetTimer() {
+        pauseTimer();
+        timerRemaining = timerInitial;
+        document.getElementById('timerText').classList.remove('timer-warning');
+        updateTimerUI();
+    }
+
+    function updateTimerUI() {
+        const timerText = document.getElementById('timerText');
+        const ring = document.getElementById('timerProgressRing');
+        
+        timerText.innerText = timerRemaining;
+
+        const circumference = 263.89;
+        const offset = circumference - (timerRemaining / timerInitial) * circumference;
+        ring.style.strokeDashoffset = offset;
+
+        if (timerRemaining <= 5) {
+            timerText.classList.add('timer-warning');
+        } else {
+            timerText.classList.remove('timer-warning');
+        }
+    }
+
+    function toggleCheatSheet() {
+        playSound('click');
+        const content = document.getElementById('cheatSheetContent');
+        const text = document.getElementById('cheatToggleText');
+        const icon = document.getElementById('cheatToggleIcon');
+
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            text.innerText = 'Hide';
+            icon.className = 'fa-solid fa-chevron-up';
+        } else {
+            content.classList.add('hidden');
+            text.innerText = 'Show';
+            icon.className = 'fa-solid fa-chevron-down';
+        }
+    }
+
+    // --- LEADERBOARD MODAL LOGIC ---
+    function openLeaderboardModal() {
+        playSound('click');
+        renderLeaderboard();
+        const modal = document.getElementById('leaderboardModal');
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    function closeLeaderboardModal() {
+        playSound('click');
+        const modal = document.getElementById('leaderboardModal');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    function renderLeaderboard() {
+        const list = document.getElementById('leaderboardList');
+        list.innerHTML = '';
+
+        const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
+
+        const badges = [
+            { icon: 'fa-trophy text-amber-500', bg: 'bg-amber-50 border-amber-200' },
+            { icon: 'fa-medal text-slate-400', bg: 'bg-slate-50 border-slate-200' },
+            { icon: 'fa-award text-amber-700', bg: 'bg-amber-900/5 border-amber-800/20' },
+            { icon: 'fa-star text-slate-300', bg: 'bg-slate-50 border-slate-100' }
+        ];
+
+        sortedTeams.forEach((team, rank) => {
+            const badge = badges[rank] || badges[3];
+            const item = document.createElement('div');
+            item.className = `flex items-center justify-between p-3.5 rounded-2xl border ${badge.bg} transition-all`;
+            item.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center text-base font-bold">
+                        <i class="fa-solid ${badge.icon}"></i>
+                    </div>
+                    <div>
+                        <p class="font-heading font-bold text-slate-800 text-sm">#${rank + 1} ${team.name}</p>
+                        <p class="text-[10px] text-slate-400 font-semibold">${rank === 0 ? 'Current Leader' : 'Challenger'}</p>
+                    </div>
+                </div>
+                <span class="font-heading font-bold text-indigo-600 text-xl">${team.score} <span class="text-xs font-normal text-slate-400">pts</span></span>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    function finishGameAndAnnounceWinner() {
+        playSound('fanfare');
+        
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+        setTimeout(() => confetti({ particleCount: 100, spread: 70, origin: { y: 0.5 } }), 300);
+
+        const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
+        const winner = sortedTeams[0];
+
+        alert(`🏆 CONGRATULATIONS!\n\n1st Place: ${winner.name} (${winner.score} pts)\n\nGreat job everyone on practicing transitions!`);
+    }
+
+    function resetGameScores() {
+        playSound('click');
+        teams.forEach(t => t.score = 0);
+        activeTeamIndex = 0;
+        currentRound = 1;
+        document.getElementById('roundCounter').innerText = 'Round 1';
+        renderTeams();
+        renderLeaderboard();
+    }
+
+    // --- DECK MANAGEMENT MODAL LOGIC ---
+    function openDeckModal() {
+        playSound('click');
+        renderDeckModalList();
+        const modal = document.getElementById('deckModal');
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    function closeDeckModal() {
+        playSound('click');
+        const modal = document.getElementById('deckModal');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    function openHelpModal() {
+        playSound('click');
+        const modal = document.getElementById('helpModal');
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    function closeHelpModal() {
+        playSound('click');
+        const modal = document.getElementById('helpModal');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    function renderDeckModalList() {
+        const list = document.getElementById('deckCardsList');
+        document.getElementById('totalCardCount').innerText = topicsDeck.length;
+        list.innerHTML = '';
+
+        topicsDeck.forEach((card, index) => {
+            const item = document.createElement('div');
+            item.className = 'flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs';
+            item.innerHTML = `
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">
+                        <i class="fa-solid ${card.icon}"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-slate-800">${card.title}</p>
+                        <p class="text-[10px] text-slate-400">${card.desc || 'No description'}</p>
+                    </div>
+                </div>
+                <button onclick="removeTopic(${index})" class="text-slate-400 hover:text-red-500 transition p-1">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    function addCustomTopic(e) {
+        e.preventDefault();
+        const titleInput = document.getElementById('newTopicTitle');
+        const descInput = document.getElementById('newTopicDesc');
+        const iconSelect = document.getElementById('newTopicIcon');
+
+        if (!titleInput.value.trim()) return;
+
+        topicsDeck.push({
+            id: Date.now(),
+            title: titleInput.value.trim(),
+            desc: descInput.value.trim() || 'Custom topic card',
+            icon: iconSelect.value
+        });
+
+        titleInput.value = '';
+        descInput.value = '';
+        playSound('click');
+        renderDeckModalList();
+    }
+
+    function removeTopic(index) {
+        if (topicsDeck.length <= 2) {
+            alert('You must have at least 2 cards in the deck!');
+            return;
+        }
+        topicsDeck.splice(index, 1);
+        playSound('click');
+        renderDeckModalList();
+    }
+
+    function resetDefaultDeck() {
+        topicsDeck = [...DEFAULT_TOPICS];
+        playSound('click');
+        renderDeckModalList();
+    }
+
+    // --- APP INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+        renderTeams();
+        drawNewPair();
+        updateTimerUI();
+    });
+    </script>
+</body>
+</html>
