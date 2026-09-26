@@ -791,60 +791,6 @@
         // Generate AI Transition Scripts
         generateAITransitions();
     }
-    }
-
-    function addTeam() {
-        if (teams.length >= 4) return;
-        const newId = teams.length + 1;
-        teams.push({ id: newId, name: `Team ${String.fromCharCode(64 + newId)}`, score: 0 });
-        playSound('click');
-        renderTeams();
-    }
-
-    function updateTeamName(index, name) {
-        teams[index].name = name.trim() || `Team ${index + 1}`;
-    }
-
-    // --- CARD DRAWING & FLIP LOGIC ---
-    function drawNewPair() {
-        playSound('cardFlip');
-        resetTimer();
-
-        if (topicsDeck.length < 2) {
-            alert('Please add more cards to the deck in settings!');
-            return;
-        }
-
-        let idx1 = Math.floor(Math.random() * topicsDeck.length);
-        let idx2 = Math.floor(Math.random() * topicsDeck.length);
-        while (idx2 === idx1) {
-            idx2 = Math.floor(Math.random() * topicsDeck.length);
-        }
-
-        currentTopic1 = topicsDeck[idx1];
-        currentTopic2 = topicsDeck[idx2];
-
-        // Trigger card animation reset
-        const card1 = document.getElementById('card1');
-        const card2 = document.getElementById('card2');
-        card1.classList.remove('rotate-y-180');
-        card2.classList.remove('rotate-y-180');
-
-        // Apply card values
-        document.getElementById('topic1Title').innerText = currentTopic1.title;
-        document.getElementById('topic1Desc').innerText = currentTopic1.desc;
-        document.getElementById('topic1Icon').innerHTML = `<i class="fa-solid ${currentTopic1.icon}"></i>`;
-
-        document.getElementById('topic2Title').innerText = currentTopic2.title;
-        document.getElementById('topic2Desc').innerText = currentTopic2.desc;
-        document.getElementById('topic2Icon').innerHTML = `<i class="fa-solid ${currentTopic2.icon}"></i>`;
-
-        // Update Dynamic Cheat Sheet
-        const t1Elements = document.querySelectorAll('.dynamic-topic1');
-        const t2Elements = document.querySelectorAll('.dynamic-topic2');
-        t1Elements.forEach(el => el.innerText = currentTopic1.title);
-        t2Elements.forEach(el => el.innerText = currentTopic2.title);
-    }
 
     function flipCard(cardNum) {
         playSound('cardFlip');
